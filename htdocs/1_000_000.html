@@ -1,0 +1,63 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1" />
+<title>Lift 1,000,000 Pounds</title>
+
+<link rel="stylesheet" type="text/css" media="screen" href="css/smoothness/jquery-ui-1.8.20.custom.css" />
+<link rel="stylesheet" type="text/css" media="screen" href="css/ui.jqgrid.css" />
+
+<script type="text/javascript" src="js/jquery-1.7.2.min.js"></script>
+<script type="text/javascript" src="js/jquery-jtemplates.js"></script>
+<script type="text/javascript" src="js/jquery.countTo.js"></script>
+<script type="text/javascript" src="js/jquery.odoticker.min.js"></script>
+<script type="text/javascript" src="js/jquery-ui-1.8.20.custom.min.js"></script>
+
+<style>
+.odoTicker {
+    height:28px;
+    overflow:hidden;
+    position:relative;
+}
+.odoTicker .odoNumber {
+    height:305px;
+    width:19px;
+    position:relative;
+    background-image:url(img/numbers-new.gif);    
+    float:left;
+    overflow:hidden;
+    margin:0 1px;
+}
+#onemillion {font-size: 32px; font-family: Verdana;}
+</style>
+<script type="text/javascript">
+$(document).ready(function(){
+  function total() {
+    $.get("pl/stats", null, function(data){
+      $("#total").odoTicker({number:parseInt(data.total)});
+      $("#groups").html('');
+      var arr = [];
+      $.each(data.groups, function(group, pounds) {
+        arr.push(group);
+      });
+//      arr.sort(function(a,b){return ((data.groups[a]>data.groups[b])?-1:((data.groups[a]<data.groups[b])?1:0));});
+      arr.sort(function(a,b){return ((parseInt(a)<parseInt(b))?-1:((parseInt(a)>parseInt(b))?1:0));});
+      $.each(arr, function(index, group){
+        $("#groups").append("<b>" + data.groups[group].name + "</b> have lifted <u><b>" + data.groups[group].pounds + "</b></u> lbs!<br />");
+      });
+    }, 'json');
+  }
+  total();
+  setInterval(function(){total()}, 5000);
+});
+</script>
+</head>
+<body>
+
+<table id="onemillion">
+<tr><td style="padding-left: 50px; width: 500px; height: 155px; vertical-align: top;"><b><u>GRAND TOTAL:</u></b><br /><br /><div id="total"></div></td></tr>
+<tr><td><div id="groups"></div></td></tr>
+</div>
+
+</body>
+</html>

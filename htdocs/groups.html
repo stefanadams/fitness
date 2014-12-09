@@ -1,0 +1,82 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1" />
+<title>Lift Groups</title>
+
+<link rel="stylesheet" type="text/css" media="screen" href="css/smoothness/jquery-ui-1.8.20.custom.css" />
+<link rel="stylesheet" type="text/css" media="screen" href="css/ui.jqgrid.css" />
+
+<script type="text/javascript" src="js/jquery-1.7.2.min.js"></script>
+<script type="text/javascript" src="js/i18n/grid.locale-en.js"></script>
+<script type="text/javascript" src="js/jquery.jqGrid-4.3.2.src.js"></script>
+<script type="text/javascript" src="js/jquery.json-2.3.min.js"></script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+	$("#list1").jqGrid({
+		url: 'pl/groups',
+		mtype: 'POST',   
+		datatype: 'json',
+		jsonReader: {repeatitems: false, id: "liftgroup_id"},
+		ajaxGridOptions: { contentType: "application/json; charset=utf-8" },  
+		caption: "Groups",
+		colModel:[
+			{name:'name',label:'Group', width:200,editable:true,editoptions:{size:50},editrules:{required:true},formoptions:{elmsuffix:'(*)'}}
+		],
+		cellEdit: true,
+		cellurl: 'pl/groups/cell',
+		beforeSubmitCell: function(rowid,celname,value,iRow,iCol){   
+			return {celname:celname};
+		},
+		recreateForm: true,
+		altRows: true,
+		rownumbers: true,
+		rownumWidth: 50,
+		scroll: true,
+		rowNum: 50,
+		rowList: [10, 20, 50, 100, 500, 1000, 5000, 10000],
+		pager: $('#pager1'),
+		sortname: 'liftgroup_id',
+		viewrecords: true,
+		height: "75\%",
+		autowidth: true
+	}).navGrid('#pager1',
+		{edit:true,add:true,del:true},
+		// {edit}, {add}, {del}, {search}, {view}
+		{
+			url: "pl/groups/edit",
+			editCaption: "Edit Group",
+			width: 700,
+			closeOnEscape: true
+		},
+		{
+			url: "pl/groups/add",
+			addCaption: "Add Group",
+			width: 700,
+			closeOnEscape: true
+		},
+		{
+			url: "pl/groups/del",
+			caption: "Delete Group",
+			msg: "Deleted selected group(s)?"
+		},
+		{ 
+			url: "pl/groups/search",
+			caption: "Search Groups",
+			multipleSearch:false
+		},
+		{ 
+			url: "pl/groups/view",
+			caption: "View Groups"
+		}
+	); 
+});
+</script>
+</head> 
+<body> 
+<div id="loggedin"></div>
+<table id="list1" class="scroll"></table> 
+<div id="pager1" class="scroll" style="text-align:center;" />
+</body> 
+</html>

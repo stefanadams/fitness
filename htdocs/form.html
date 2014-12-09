@@ -1,0 +1,150 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1" />
+<title>Lift 1,000,000 Pounds</title>
+
+<link rel="stylesheet" type="text/css" media="screen" href="css/smoothness/jquery-ui-1.8.20.custom.css" />
+<link rel="stylesheet" type="text/css" media="screen" href="css/ui.jqgrid.css" />
+
+<script type="text/javascript" src="js/jquery-1.7.2.min.js"></script>
+<script type="text/javascript" src="js/jquery-jtemplates.js"></script>
+<script type="text/javascript" src="js/jquery.formparams.min.js"></script>
+<script type="text/javascript" src="js/jquery.json-2.3.min.js"></script>
+<script type="text/javascript" src="js/jquery-ui-1.8.20.custom.min.js"></script>
+
+<style>
+	.ui-autocomplete-category {
+		font-weight: bold;
+		padding: .2em .4em;
+		margin: .8em 0 .2em;
+		line-height: 1.5;
+	}
+	.ui-autocomplete {
+		max-height: 100px;
+		overflow-y: auto;
+		/* prevent horizontal scrollbar */
+		overflow-x: hidden;
+		/* add padding to account for vertical scrollbar */
+		padding-right: 20px;
+	}
+	/* IE 6 doesn't support max-height
+	 * we use height instead, but this forces the menu to always be this tall
+	 */
+	* html .ui-autocomplete {
+		height: 100px;
+	}
+</style>
+
+<script type="text/javascript">
+$(document).ready(function(){
+  $.fn.reset = function(fn) {
+    return fn ? this.bind("reset", fn) : this.trigger("reset");
+  };
+  $.widget( "custom.catcomplete", $.ui.autocomplete, {
+    _renderMenu: function( ul, items ) {
+      var self = this,
+        currentCategory = "";
+      $.each( items, function( index, item ) {
+        if ( item.category != currentCategory ) {
+          ul.append( "<li class='ui-autocomplete-category'>" + item.category + "</li>" );
+          currentCategory = item.category;
+        }
+        self._renderItem( ul, item );
+      });
+    }
+  });
+
+  $("#form,#lifter_stats").hide();
+  $("#stats").setTemplateElement("t_stats", null, {runnable_functions: true,disallow_functions: false});
+  $("#form").setTemplateElement("t_form");
+  $("#stats").processTemplateStart("pl/stats", null, 5000, null, {
+    type: 'GET'
+  });
+  $("#form").processTemplateURL("pl/exercises/all", null, {
+    type: 'GET'
+  });
+  $("#ac_lifter").catcomplete({
+    source: "pl/lifters/ac",
+    select: function(event,ui){
+      $("#lifter_id").val(ui.item.value);
+      $("#lifter").html(ui.item.label);
+      $("#liftgroup").html(ui.item.category);
+      $("#pounds").html(ui.item.pounds);
+      $("#form,#lifter_stats").show();
+      $.get("pl/forms", {lifter_id: ui.item.value}, function(data){
+        $("#forms").get(0).options.length = 0;
+        $("#forms").get(0).options[0] = new Option("New", "0");   
+        $.each(data, function(index, item) {
+          $("#forms").get(0).options[$("#forms").get(0).options.length] = new Option(item.time, item.form_id);
+        });
+      }, 'json');
+      ui.item.value="";
+    }
+  });
+  $('form').submit(function() {
+    $("#stats").processTemplateStop();
+    $.post("pl/forms", $.toJSON($(this).formParams()), function(data){
+      $('form').reset();
+      $("#ac_lifter").focus();
+      $("#form,#lifter_stats").hide();
+    }, 'json');
+    $("#stats").processTemplateStart("pl/stats", null, 5000, null, {
+      type: 'GET'
+    });
+    return false;
+  });
+  $("#forms").change(function(){
+    if ( $(this).val() == 0 ) {
+      $("form[name='form']").reset();
+      $("#forms option[value='0']").attr('selected','selected');
+      $("#form_id").val(0);
+    } else {
+      $.get("pl/forms/"+$(this).val(), null, function(data){
+        $("form[name='form']").reset();
+        $("#forms option[value='"+data.form_id+"']").attr('selected','selected');
+        $("#form_id").val(data.form_id);
+        $.each(data.forms, function(index, item) {
+          $("input[name='sets["+item.exercise_id+"][exercise_id]']").val(item.exercise_id);
+          $("input[name='sets["+item.exercise_id+"][pounds]']").val(item.pounds);
+          $("input[name='sets["+item.exercise_id+"][reps]']").val(item.reps);
+        });
+      }, 'json');
+    }
+  });
+});
+</script>
+</head>
+<body>
+
+<div id="stats"></div>
+<hr />
+<form name="form">
+<label for="ac_lifter">Lifter: <input type="text" id="ac_lifter"></label>
+<input type="hidden" name="form_id" id="form_id" value="0">
+<input type="hidden" name="lifter_id" id="lifter_id">
+<table id="lifter_stats">
+<tr><td>Lifter:</td><td id="lifter"></td>
+<tr><td>Group:</td><td id="liftgroup"></td>
+<tr><td>Pounds Lifted:</td><td id="pounds"></td>
+<tr><td>Form:</td><td><select id="forms"></select></td></tr>
+</table>
+<div id="form"></div>
+</form>
+
+<textarea id="t_stats" style="display:none">
+Total pounds lifted: {$T.total[0].pounds}
+</textarea>
+
+<textarea id="t_form" style="display:none">
+<table>
+<tr><th>Exercise</th><th>Pounds</th><th>Reps</th></tr>
+{#foreach $T.exercises as e}
+<tr><td><input type="hidden" name="sets[{$T.e.exercise_id}][exercise_id]" value="{$T.e.exercise_id}">{$T.e.name}</td><td><input class="sum" type="text" name="sets[{$T.e.exercise_id}][pounds]"></td><td><input class="sum" type="text" name="sets[{$T.e.exercise_id}][reps]"></td></tr>
+{#/for}
+<tr><td align="center" colspan="3"><input type="submit" value="Submit Lifting Results"></td></tr>
+</table>
+</textarea>
+
+</body>
+</html>

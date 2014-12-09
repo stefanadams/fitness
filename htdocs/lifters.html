@@ -1,0 +1,97 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1" />
+<title>Lifters</title>
+
+<link rel="stylesheet" type="text/css" media="screen" href="css/smoothness/jquery-ui-1.8.20.custom.css" />
+<link rel="stylesheet" type="text/css" media="screen" href="css/ui.jqgrid.css" />
+
+<script type="text/javascript" src="js/jquery-1.7.2.min.js"></script>
+<script type="text/javascript" src="js/i18n/grid.locale-en.js"></script>
+<script type="text/javascript" src="js/jquery.jqGrid-4.3.2.src.js"></script>
+<script type="text/javascript" src="js/jquery.json-2.3.min.js"></script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+	$("#list1").jqGrid({
+		url: 'pl/lifters',
+		mtype: 'POST',   
+		datatype: 'json',
+		jsonReader: {repeatitems: false, id: "lifter_id"},
+		ajaxGridOptions: { contentType: "application/json; charset=utf-8" },  
+		caption: "Lifters",
+		colModel:[
+			{name:'lastname',label:'Last Name', width:200,editable:true,editoptions:{size:50},editrules:{required:true},formoptions:{elmsuffix:'(*)'}},
+			{name:'firstname',label:'First Name', width:200,editable:true,editoptions:{size:50},editrules:{required:true},formoptions:{elmsuffix:'(*)'}},
+			{name:'liftgroup.name',label:'Group', width:200,editable:true,edittype:'select',editoptions:{multiple:false,dataUrl:'pl/forms/bs/liftgroups'}},
+			{name:'gender',label:'Gender', width:200,editable:true,editoptions:{size:50},editrules:{required:true},formoptions:{elmsuffix:'(*)'}}
+		],
+		cellEdit: true,
+		cellurl: 'pl/lifters/cell',
+		beforeSubmitCell: function(rowid,celname,value,iRow,iCol){
+			if (celname=="liftgroup.name"){
+				return {celname:"liftgroup_id",liftgroup_id:value};
+			} else {
+				return {celname:celname};
+			}
+		},
+		recreateForm: true,
+		altRows: true,
+		rownumbers: true,
+		rownumWidth: 50,
+		scroll: true,
+		rowNum: 50,
+		rowList: [10, 20, 50, 100, 500, 1000, 5000, 10000],
+		pager: $('#pager1'),
+		sortname: 'lifter_id',
+		viewrecords: true,
+		height: "75\%",
+		autowidth: true
+	}).navGrid('#pager1',
+		{edit:true,add:true,del:true},
+		// {edit}, {add}, {del}, {search}, {view}
+		{
+			url: "pl/lifters/edit",
+			editCaption: "Edit Lifter",
+			width: 700,
+			beforeSubmit: function(postdata){
+				postdata.liftgroup_id=postdata["liftgroup.name"];
+				return [true,''];
+			},
+			closeOnEscape: true
+		},
+		{
+			url: "pl/lifters/add",
+			addCaption: "Add Lifter",
+			width: 700,
+			beforeSubmit: function(postdata){
+				postdata.liftgroup_id=postdata["liftgroup.name"];
+				return [true,''];
+			},
+			closeOnEscape: true
+		},
+		{
+			url: "pl/lifters/del",
+			caption: "Delete Lifter",
+			msg: "Deleted selected lifter(s)?"
+		},
+		{ 
+			url: "pl/lifters/search",
+			caption: "Search Lifters",
+			multipleSearch:false
+		},
+		{ 
+			url: "pl/lifters/view",
+			caption: "View Lifters"
+		}
+	); 
+});
+</script>
+</head> 
+<body> 
+<div id="loggedin"></div>
+<table id="list1" class="scroll"></table> 
+<div id="pager1" class="scroll" style="text-align:center;" />
+</body> 
+</html>
